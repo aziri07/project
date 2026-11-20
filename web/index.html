@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>رَصد — إدارة السوشيال ميديا</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Readex+Pro:wght@500;600;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+/* ===== الإعدادات: عدّل هذه القيم بعد إنشاء مشروع Supabase وحساب Moyasar ===== */
+</style>
+<script>
+window.RASD_CONFIG = {
+  SUPABASE_URL: "https://YOUR-PROJECT.supabase.co",
+  SUPABASE_ANON_KEY: "YOUR-ANON-OR-PUBLISHABLE-KEY",
+  MOYASAR_PUBLISHABLE_KEY: "pk_test_xxx"
+};
+</script>
+<style>
+:root{
+  --bg:#F3F5F7; --surface:#FFFFFF; --sunk:#E8ECEF; --line:#D9DFE4;
+  --fg:#16202A; --muted:#5E6B77; --accent:#0B7A75; --accent-soft:#D5EEEC; --accent-fg:#FFFFFF;
+  --amber:#B7791F; --good:#15803D; --bad:#C2410C; --draft:#6B7280; --admin:#5B4BB7;
+  --font-body:"IBM Plex Sans Arabic",Tahoma,"Segoe UI",sans-serif;
+  --font-head:"Readex Pro","IBM Plex Sans Arabic",Tahoma,sans-serif; --r:10px;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0F161C; --surface:#172129; --sunk:#1F2B34; --line:#2A3843;
+  --fg:#E6ECF0; --muted:#94A3AF; --accent:#3CC1B8; --accent-soft:#163A39; --accent-fg:#06201F;
+  --amber:#E0A84A; --good:#4ADE80; --bad:#FB923C; --draft:#9CA3AF; --admin:#A99BF5; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:14px;line-height:1.55}
+h1,h2,h3{font-family:var(--font-head);margin:0;font-weight:600;text-wrap:balance}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+select,input,textarea{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+textarea{resize:vertical;min-height:120px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:500;white-space:nowrap}
+.btn:hover{background:var(--sunk)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.danger{color:var(--bad)}
+.btn.sm{padding:4px 10px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+[hidden]{display:none!important}
+/* auth / landing */
+.landing{max-width:1100px;margin:0 auto;padding:32px max(16px,env(safe-area-inset-right)) 48px max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:28px}
+.hero{display:grid;grid-template-columns:1.2fr 1fr;gap:28px;align-items:start}
+.hero h1{font-size:34px;line-height:1.3}
+.hero p{color:var(--muted);font-size:16px;max-width:52ch}
+.authbox{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.seg{display:flex;background:var(--sunk);border-radius:8px;padding:3px}
+.seg button{flex:1;border:0;background:none;padding:7px;border-radius:6px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);font-weight:600}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.plan{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.plan.current{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.plan .price{font-family:var(--font-head);font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}
+.plan .price small{font-size:13px;color:var(--muted);font-weight:500}
+.plan ul{margin:0;padding-inline-start:18px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.plan .btn{margin-top:auto}
+/* app shell */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100%}
+.rail{background:var(--surface);border-inline-end:1px solid var(--line);padding:18px 14px;display:flex;flex-direction:column;gap:16px;position:sticky;top:0;height:100vh}
+.logo{display:flex;align-items:center;gap:10px;font-family:var(--font-head);font-weight:700;font-size:20px}
+.rolebadge{font-size:11px;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--admin) 18%,transparent);color:var(--admin);font-weight:600}
+nav.menu{display:flex;flex-direction:column;gap:2px}
+nav.menu a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:var(--fg);text-decoration:none;font-weight:500}
+nav.menu a:hover{background:var(--sunk)}
+nav.menu a[aria-current="page"]{background:var(--accent-soft);color:var(--accent)}
+.rail .who{margin-top:auto;font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+main{min-width:0;padding:22px max(24px,env(safe-area-inset-left)) 40px max(24px,env(safe-area-inset-right));display:flex;flex-direction:column;gap:18px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.top h1{font-size:23px}
+.sub{color:var(--muted);font-size:13px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0}
+.panel h2{font-size:15px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.kpi .l{font-size:12px;color:var(--muted)}
+.kpi .v{font-family:var(--font-head);font-size:25px;font-weight:600;font-variant-numeric:tabular-nums}
+.grid2{display:grid;grid-template-columns:3fr 2fr;gap:14px}
+.grid2>*{min-width:0}
+.meter{display:flex;flex-direction:column;gap:3px}
+.meter .row{display:flex;justify-content:space-between;font-size:12px}
+.meter .bar{height:8px;background:var(--sunk);border-radius:4px;overflow:hidden}
+.meter .bar i{display:block;height:100%;background:var(--accent)}
+.meter.warn .bar i{background:var(--amber)} .meter.full .bar i{background:var(--bad)}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{font-size:11px;color:var(--muted);font-weight:500;text-align:start;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--sunk)}
+.ptext{max-width:360px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.pill{font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600;white-space:nowrap;background:var(--sunk)}
+.pill.published,.pill.active,.pill.paid{background:color-mix(in srgb,var(--good) 16%,transparent);color:var(--good)}
+.pill.scheduled,.pill.trialing,.pill.publishing{background:color-mix(in srgb,var(--amber) 18%,transparent);color:var(--amber)}
+.pill.failed,.pill.past_due,.pill.canceled,.pill.expired{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+.netchip{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:2px 8px;border-radius:999px;background:var(--sunk);white-space:nowrap}
+.netchip i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.list{display:flex;flex-direction:column;gap:8px}
+.item{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:8px;cursor:pointer}
+.item:hover{border-color:var(--accent)}
+.item .body{min-width:0;flex:1}
+.when{font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.empty{padding:24px 10px;text-align:center;color:var(--muted)}
+.note{font-size:12px;color:var(--muted);background:var(--sunk);padding:8px 12px;border-radius:8px}
+.err{color:var(--bad);font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
+.row>*{flex:1;min-width:130px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12px;color:var(--muted)}
+.filters{display:flex;gap:8px;flex-wrap:wrap}
+.filters>*{width:auto;min-width:150px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.acc{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.acc:last-child{border-bottom:0}
+.connect{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+/* calendar */
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:1px solid var(--line);border-inline-start:1px solid var(--line);min-width:560px}
+.cal .dow{font-size:12px;color:var(--muted);padding:6px;text-align:center;border-inline-end:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--sunk)}
+.cal .day{min-height:100px;padding:5px;border-inline-end:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:4px;cursor:pointer;min-width:0}
+.cal .day:hover{background:var(--sunk)} .cal .day.out{opacity:.45}
+.cal .day .n{font-size:12px;color:var(--muted)}
+.cal .day.today .n{background:var(--accent);color:var(--accent-fg);border-radius:999px;width:22px;height:22px;display:grid;place-items:center}
+.cal .ev{font-size:11px;padding:3px 6px;border-radius:5px;background:var(--sunk);border-inline-start:3px solid var(--draft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal .ev.published{border-color:var(--good)} .cal .ev.scheduled{border-color:var(--amber)} .cal .ev.failed{border-color:var(--bad)}
+/* modal */
+.scrim{position:fixed;inset:0;background:rgb(10 16 20 / .45);display:grid;place-items:center;padding:16px;z-index:50}
+.modal{background:var(--surface);border-radius:14px;border:1px solid var(--line);width:min(620px,100%);max-height:92vh;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+.modal h2{font-size:18px}
+.ai{border:1px solid color-mix(in srgb,var(--admin) 40%,var(--line));background:color-mix(in srgb,var(--admin) 6%,var(--surface));border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.ai .head{display:flex;justify-content:space-between;align-items:center;font-weight:600;color:var(--admin)}
+.ai .btns{display:flex;gap:6px;flex-wrap:wrap}
+.netpick{display:flex;flex-wrap:wrap;gap:6px}
+.netpick label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:5px 10px;cursor:pointer;font-size:13px}
+.netpick input{width:auto;margin:0}
+.thumb{max-height:140px;border-radius:8px;border:1px solid var(--line)}
+.actions{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap}
+.toast{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:8px;z-index:60;font-size:13px;max-width:90vw}
+.loading{display:grid;place-items:center;height:100%;color:var(--muted)}
+@media (max-width:900px){.grid2,.hero{grid-template-columns:1fr}}
+@media (max-width:760px){
+  .app{grid-template-columns:1fr}
+  .rail{position:sticky;top:0;height:auto;z-index:20;border-inline-end:0;border-bottom:1px solid var(--line);padding:10px 16px;gap:8px}
+  nav.menu{flex-direction:row;overflow-x:auto}
+  nav.menu a{white-space:nowrap;padding:7px 10px}
+  .rail .who{display:none}
+  main{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+}
+</style>
+</head>
+<body>
+<div id="root" class="loading">جارٍ التحميل…</div>
+<div id="modalRoot"></div>
+
+<script>
+const CFG = window.RASD_CONFIG;
+const sb = supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
+const FN = CFG.SUPABASE_URL + '/functions/v1/';
+
+const NETS = {
+  facebook:{label:'فيسبوك',color:'#3B6FE0'}, instagram:{label:'إنستغرام',color:'#D6336C'},
+  x:{label:'إكس',color:'#7C8794'}, tiktok:{label:'تيك توك',color:'#14A6A0'},
+  linkedin:{label:'لينكدإن',color:'#2E7FC4'}, youtube:{label:'يوتيوب',color:'#E0443A'}
+};
+const CONNECTABLE = {facebook:'meta', instagram:'meta', x:'x'};
+const POST_ST = {draft:'مسودة',scheduled:'مجدول',publishing:'قيد النشر',published:'منشور',failed:'فشل'};
+const SUB_ST = {active:'فعّال',trialing:'تجريبي',past_due:'متأخر',canceled:'ملغى',inactive:'غير مشترك'};
+const DOW = ['السبت','الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
+const nf = new Intl.NumberFormat('ar-u-nu-latn');
+const nfc = new Intl.NumberFormat('ar-u-nu-latn',{notation:'compact',maximumFractionDigits:1});
+const money = (v,c='SAR') => new Intl.NumberFormat('ar-u-nu-latn',{style:'currency',currency:c,maximumFractionDigits:0}).format(v||0);
+const df = new Intl.DateTimeFormat('ar-u-nu-latn',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+const dd = new Intl.DateTimeFormat('ar-u-nu-latn',{day:'numeric',month:'short',year:'numeric'});
+const dfMonth = new Intl.DateTimeFormat('ar-u-nu-latn',{month:'long',year:'numeric'});
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2,'0');
+const localInput = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const dayKey = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const netChip = n => NETS[n] ? `<span class="netchip"><i style="background:${NETS[n].color}"></i>${NETS[n].label}</span>` : '';
+const pill = (s, map) => `<span class="pill ${s}">${(map||POST_ST)[s]||s}</span>`;
+function toast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),3200); }
+const errMsg = e => (e && (e.message || e.error)) || 'حدث خطأ غير متوقع';
+
+const S = { session:null, profile:null, usage:null, plans:[], brands:[], accounts:[], posts:[], brandId:null, view:null, calMonth:null, filt:{status:'all',q:''}, admin:{} };
+try { S.brandId = localStorage.getItem('rasd.brand'); } catch(_) {}
+
+async function callFn(name, body){
+  const { data:{ session } } = await sb.auth.getSession();
+  const r = await fetch(FN + name, { method:'POST', headers:{ 'Content-Type':'application/json', Authorization:'Bearer '+session.access_token, apikey:CFG.SUPABASE_ANON_KEY }, body:JSON.stringify(body) });
+  const j = await r.json().catch(()=>({}));
+  if (!r.ok) throw new Error(j.error || 'تعذّر تنفيذ الطلب');
+  return j;
+}
+
+/* ================= الدخول والصفحة العامة ================= */
+function planCard(p, opts={}){
+  const cur = opts.current;
+  return `<div class="plan ${cur?'current':''}">
+    <h3>${esc(p.name)} ${cur?'<span class="pill active">باقتك</span>':''}</h3>
+    <div class="sub">${esc(p.description||'')}</div>
+    <div class="price">${money(p.price_monthly,p.currency)} <small>/ شهريًا</small></div>
+    <ul>
+      <li>${nf.format(p.max_brands)} علامة تجارية</li>
+      <li>${nf.format(p.max_accounts)} حساب مربوط</li>
+      <li>${nf.format(p.max_posts_month)} منشور مجدول شهريًا</li>
+      <li>${nf.format(p.ai_requests_month)} طلب لمساعد الكتابة Claude</li>
+      <li>${p.networks.map(n=>NETS[n]?.label).filter(Boolean).join('، ')}</li>
+    </ul>
+    ${opts.action||''}
+  </div>`;
+}
+async function renderLanding(){
+  const { data: plans } = await sb.from('plans').select('*').eq('is_active',true).order('sort');
+  S.plans = plans || [];
+  $('#root').className = '';
+  $('#root').innerHTML = `<div class="landing">
+    <div class="hero">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="logo">${logoSvg()} رَصد</div>
+        <h1>جدول منشوراتك على كل المنصات من لوحة واحدة</h1>
+        <p>اربط حسابات فيسبوك وإنستغرام وإكس، واكتب منشوراتك بمساعدة Claude، وحدّد موعد النشر، والمنصة تنشر عنك في الوقت المحدد.</p>
+      </div>
+      <form class="authbox" id="authForm">
+        <div class="seg" role="group"><button type="button" data-mode="in" aria-pressed="true">تسجيل الدخول</button><button type="button" data-mode="up" aria-pressed="false">حساب جديد</button></div>
+        <div class="field" id="nameField" hidden><label for="aName">الاسم</label><input id="aName" autocomplete="name"></div>
+        <div class="field"><label for="aEmail">البريد الإلكتروني</label><input id="aEmail" type="email" required autocomplete="email" dir="ltr"></div>
+        <div class="field"><label for="aPass">كلمة المرور</label><input id="aPass" type="password" required minlength="8" autocomplete="current-password" dir="ltr"></div>
+        <div class="err" id="aErr"></div>
+        <button class="btn primary" id="aSubmit">دخول</button>
+      </form>
+    </div>
+    <section style="display:flex;flex-direction:column;gap:12px"><h2>الباقات</h2><div class="plans">${S.plans.map(p=>planCard(p)).join('')||'<div class="empty">لا توجد باقات بعد.</div>'}</div></section>
+  </div>`;
+  let mode='in';
+  document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{ mode=b.dataset.mode; document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed',x===b)); $('#nameField').hidden = mode!=='up'; $('#aSubmit').textContent = mode==='up'?'إنشاء الحساب':'دخول'; $('#aPass').autocomplete = mode==='up'?'new-password':'current-password'; });
+  $('#authForm').onsubmit = async e => {
+    e.preventDefault(); $('#aErr').textContent=''; $('#aSubmit').disabled=true;
+    const email=$('#aEmail').value.trim(), password=$('#aPass').value;
+    const r = mode==='up'
+      ? await sb.auth.signUp({ email, password, options:{ data:{ full_name:$('#aName').value.trim() }, emailRedirectTo: location.origin+location.pathname } })
+      : await sb.auth.signInWithPassword({ email, password });
+    $('#aSubmit').disabled=false;
+    if (r.error) { $('#aErr').textContent = r.error.message.includes('Invalid login') ? 'البريد أو كلمة المرور غير صحيحة' : r.error.message; return; }
+    if (mode==='up' && !r.data.session) $('#aErr').textContent = 'أرسلنا رابط تأكيد إلى بريدك. افتحه ثم سجّل الدخول.';
+  };
+}
+const logoSvg = () => `<svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="var(--accent)"/><path d="M7 20 L12 14 L16 17 L23 9" stroke="var(--accent-fg)" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="23" cy="9" r="2.2" fill="var(--accent-fg)"/></svg>`;
+
+/* ================= غلاف التطبيق ================= */
+const CLIENT_MENU = [['dashboard','لوحة التحكم'],['planner','التقويم والجدولة'],['posts','المنشورات'],['accounts','الحسابات والعلامات'],['billing','الاشتراك والفواتير']];
+const ADMIN_MENU = [['admin','نظرة عامة'],['clients','العملاء'],['plans','الباقات'],['payments','المدفوعات']];
+const isAdmin = () => S.profile?.role === 'admin';
+
+function shell(){
+  const menu = isAdmin() ? ADMIN_MENU : CLIENT_MENU;
+  $('#root').className='';
+  $('#root').innerHTML = `<div class="app">
+    <aside class="rail">
+      <div class="logo">${logoSvg()} رَصد ${isAdmin()?'<span class="rolebadge">مدير النظام</span>':''}</div>
+      ${isAdmin()?'':`<div class="field"><label for="brandSel">العلامة التجارية</label><select id="brandSel"></select></div>`}
+      <nav class="menu" id="menu">${menu.map(([k,l])=>`<a href="#${k}" data-v="${k}">${l}</a>`).join('')}</nav>
+      <div class="who"><span>${esc(S.profile.full_name||S.profile.email)}</span><span dir="ltr" style="text-align:end">${esc(S.profile.email)}</span><button class="btn sm" id="logout">تسجيل الخروج</button></div>
+    </aside>
+    <main id="view"></main>
+  </div>`;
+  $('#logout').onclick = () => sb.auth.signOut();
+  const bs = $('#brandSel'); if (bs) bs.onchange = e => { S.brandId=e.target.value; try{localStorage.setItem('rasd.brand',S.brandId)}catch(_){}; route(); };
+}
+function fillBrandSelect(){
+  const bs=$('#brandSel'); if(!bs) return;
+  if(!S.brands.find(b=>b.id===S.brandId)) S.brandId = S.brands[0]?.id || null;
+  bs.innerHTML = S.brands.length ? S.brands.map(b=>`<option value="${b.id}" ${b.id===S.brandId?'selected':''}>${esc(b.name)}</option>`).join('') : '<option value="">لا توجد علامات</option>';
+}
+function header(title, sub, actions=''){ return `<div class="top"><div><h1>${title}</h1><div class="sub">${sub}</div></div><div style="display:flex;gap:8px;flex-wrap:wrap">${actions}</div></div>`; }
+
+async function loadClient(){
+  const [u, b, a, p, pl] = await Promise.all([
+    sb.rpc('my_usage'),
+    sb.from('brands').select('*').order('created_at'),
+    sb.from('social_accounts').select('id,brand_id,network,handle,followers,status,connected_at').order('connected_at'),
+    sb.from('posts').select('*').order('scheduled_at',{ascending:false, nullsFirst:true}).limit(1000),
+    sb.from('plans').select('*').eq('is_active',true).order('sort'),
+  ]);
+  S.usage=u.data; S.brands=b.data||[]; S.accounts=a.data||[]; S.posts=p.data||[]; S.plans=pl.data||[];
+  fillBrandSelect();
+}
+const brand = () => S.brands.find(b=>b.id===S.brandId) || null;
+const brandPosts = () => S.posts.filter(p=>p.brand_id===S.brandId);
+const brandAccounts = () => S.accounts.filter(a=>a.brand_id===S.brandId);
+const hasPlan = () => !!S.usage?.plan;
+
+/* ================= لوحة العميل ================= */
+function meter(label, used, max){
+  const pct = max ? Math.min(100, used/max*100) : 0;
+  return `<div class="meter ${pct>=100?'full':pct>=80?'warn':''}"><div class="row"><span>${label}</span><span>${nf.format(used)} / ${nf.format(max)}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`;
+}
+function usageMeters(){
+  const u=S.usage, p=u?.plan; if(!p) return '';
+  return `<div class="list">${meter('العلامات التجارية',u.brands,p.max_brands)}${meter('الحسابات المربوطة',u.accounts,p.max_accounts)}${meter('المنشورات هذا الشهر',u.posts_month,p.max_posts_month)}${meter('طلبات مساعد Claude',u.ai_month,p.ai_requests_month)}</div>`;
+}
+function noPlanBanner(){ return hasPlan() ? '' : `<div class="panel" style="border-color:var(--amber)"><h2>لا يوجد اشتراك فعّال</h2><p class="sub" style="margin:0 0 10px">اختر باقة لتبدأ ربط حساباتك وجدولة المنشورات.</p><a class="btn primary" href="#billing">اختر باقة</a></div>`; }
+const itemRow = p => `<div class="item" data-edit="${p.id}"><div class="body"><div class="ptext">${esc(p.text)}</div><div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${(p.networks||[]).map(netChip).join('')}</div>${p.error?`<div class="err" style="margin-top:4px">${esc(p.error)}</div>`:''}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="when">${p.scheduled_at?df.format(new Date(p.scheduled_at)):'بلا موعد'}</span>${pill(p.status)}</div></div>`;
+const newBtn = () => `<button class="btn primary" data-act="new" ${hasPlan()&&brand()?'':'disabled'}>+ منشور جديد</button>`;
+
+function vDashboard(){
+  const b=brand(); const posts=brandPosts(); const now=new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const followers = brandAccounts().reduce((a,x)=>a+(x.followers||0),0);
+  const upcoming = posts.filter(p=>p.status==='scheduled').sort((a,c)=>a.scheduled_at.localeCompare(c.scheduled_at)).slice(0,6);
+  const failed = posts.filter(p=>p.status==='failed').slice(0,5);
+  const pubMonth = posts.filter(p=>p.status==='published' && new Date(p.scheduled_at)>=monthStart).length;
+  return header(b?esc(b.name):'لوحة التحكم', 'نظرة سريعة على حساباتك وجدولك', newBtn()) + noPlanBanner() + `
+  <div class="kpis">
+    <div class="kpi"><span class="l">إجمالي المتابعين</span><span class="v">${nfc.format(followers)}</span></div>
+    <div class="kpi"><span class="l">الحسابات المربوطة</span><span class="v">${nf.format(brandAccounts().length)}</span></div>
+    <div class="kpi"><span class="l">مجدولة</span><span class="v">${nf.format(posts.filter(p=>p.status==='scheduled').length)}</span></div>
+    <div class="kpi"><span class="l">نُشرت هذا الشهر</span><span class="v">${nf.format(pubMonth)}</span></div>
+    <div class="kpi"><span class="l">فشلت</span><span class="v" style="color:${failed.length?'var(--bad)':'inherit'}">${nf.format(posts.filter(p=>p.status==='failed').length)}</span></div>
+  </div>
+  <div class="grid2">
+    <section class="panel"><h2>القادم في الجدول <a href="#planner" class="sub">التقويم</a></h2>${upcoming.length?`<div class="list">${upcoming.map(itemRow).join('')}</div>`:'<div class="empty">لا توجد منشورات مجدولة.</div>'}</section>
+    <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+      ${hasPlan()?`<section class="panel"><h2>استهلاك باقة «${esc(S.usage.plan.name)}» <a href="#billing" class="sub">ترقية</a></h2>${usageMeters()}</section>`:''}
+      <section class="panel"><h2>منشورات تحتاج انتباهك</h2>${failed.length?`<div class="list">${failed.map(itemRow).join('')}</div>`:'<div class="empty">لا توجد أخطاء نشر.</div>'}</section>
+    </div>
+  </div>`;
+}
+
+function vPlanner(){
+  const now=new Date(); const m=S.calMonth||new Date(now.getFullYear(),now.getMonth(),1); S.calMonth=m;
+  const first=new Date(m.getFullYear(),m.getMonth(),1); const offset=(first.getDay()+1)%7;
+  const start=new Date(first); start.setDate(1-offset);
+  const byDay={}; brandPosts().forEach(p=>{ if(!p.scheduled_at) return; const k=dayKey(new Date(p.scheduled_at)); (byDay[k]=byDay[k]||[]).push(p); });
+  const weeks=Math.ceil((offset+new Date(m.getFullYear(),m.getMonth()+1,0).getDate())/7);
+  let cells=DOW.map(d=>`<div class="dow">${d}</div>`).join('');
+  for(let i=0;i<weeks*7;i++){
+    const d=new Date(start); d.setDate(start.getDate()+i); const k=dayKey(d); const ps=(byDay[k]||[]).sort((a,c)=>a.scheduled_at.localeCompare(c.scheduled_at));
+    cells+=`<div class="day ${d.getMonth()!==m.getMonth()?'out':''} ${k===dayKey(now)?'today':''}" data-day="${k}"><span class="n">${d.getDate()}</span>${ps.slice(0,3).map(p=>{const t=new Date(p.scheduled_at);return `<div class="ev ${p.status}" data-edit="${p.id}">${pad(t.getHours())}:${pad(t.getMinutes())} ${esc(p.text)}</div>`}).join('')}${ps.length>3?`<span class="sub">+${ps.length-3}</span>`:''}</div>`;
+  }
+  const drafts=brandPosts().filter(p=>p.status==='draft');
+  return header('التقويم والجدولة','اضغط على يوم لجدولة منشور فيه', newBtn()) + noPlanBanner() + `
+  <section class="panel"><h2><span style="display:flex;gap:6px;align-items:center"><button class="btn sm" data-cal="-1" aria-label="الشهر السابق">→</button><span>${dfMonth.format(m)}</span><button class="btn sm" data-cal="1" aria-label="الشهر التالي">←</button><button class="btn sm" data-cal="0">اليوم</button></span></h2><div class="tbl-wrap"><div class="cal">${cells}</div></div></section>
+  <section class="panel"><h2>المسودات (${nf.format(drafts.length)})</h2>${drafts.length?`<div class="list">${drafts.map(itemRow).join('')}</div>`:'<div class="empty">لا توجد مسودات.</div>'}</section>`;
+}
+
+function vPosts(){
+  const f=S.filt, q=f.q.trim();
+  const list=brandPosts().filter(p=>(f.status==='all'||p.status===f.status)&&(!q||p.text.includes(q)));
+  return header('المنشورات', `${nf.format(list.length)} منشورًا`, newBtn()) + `
+  <div class="filters"><input id="fq" type="search" placeholder="ابحث في النص…" value="${esc(f.q)}"><select id="fs"><option value="all">كل الحالات</option>${Object.entries(POST_ST).map(([k,v])=>`<option value="${k}" ${f.status===k?'selected':''}>${v}</option>`).join('')}</select></div>
+  <section class="panel">${list.length?`<div class="tbl-wrap"><table><thead><tr><th>المنشور</th><th>الشبكات</th><th>الموعد</th><th>الحالة</th><th>ملاحظات</th></tr></thead><tbody>${list.map(p=>`<tr class="click" data-edit="${p.id}"><td><div class="ptext">${esc(p.text)}</div></td><td>${(p.networks||[]).map(netChip).join(' ')}</td><td style="white-space:nowrap">${p.scheduled_at?df.format(new Date(p.scheduled_at)):'—'}</td><td>${pill(p.status)}</td><td class="err" style="max-width:240px">${esc(p.error||'')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">لا توجد منشورات.</div>'}</section>`;
+}
+
+function vAccounts(){
+  const allowed = S.usage?.plan?.networks || [];
+  return header('الحسابات والعلامات','كل علامة تجارية لها حساباتها وجدولها', '') + noPlanBanner() + `
+  <section class="panel"><h2>إضافة علامة تجارية</h2>
+    <form id="brandForm" class="row"><div class="field"><label for="bName">الاسم</label><input id="bName" required maxlength="60"></div>
+    <div class="field" style="flex:0 0 90px;min-width:90px"><label for="bColor">اللون</label><input id="bColor" type="color" value="#0B7A75" style="height:38px;padding:3px"></div>
+    <div style="flex:0 0 auto;min-width:0"><button class="btn primary" ${hasPlan()?'':'disabled'}>إضافة</button></div></form></section>
+  <div class="cards">${S.brands.map(b=>{ const accs=S.accounts.filter(a=>a.brand_id===b.id); return `<section class="panel">
+    <h2><span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:${esc(b.color)}"></span> ${esc(b.name)}</span><button class="btn sm danger" data-delbrand="${b.id}">حذف</button></h2>
+    ${accs.length?accs.map(a=>`<div class="acc">${netChip(a.network)}<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis" dir="ltr">${esc(a.handle)}</span><span class="sub">${nfc.format(a.followers)}</span>${a.status!=='connected'?pill('expired',{expired:'يحتاج إعادة ربط'}):''}<button class="btn sm" data-unlink="${a.id}" aria-label="فصل">×</button></div>`).join(''):'<div class="sub">لا توجد حسابات مربوطة بعد.</div>'}
+    <div class="connect">
+      <button class="btn sm" data-connect="meta" data-brand="${b.id}" ${allowed.includes('facebook')||allowed.includes('instagram')?'':'disabled'}>ربط فيسبوك وإنستغرام</button>
+      <button class="btn sm" data-connect="x" data-brand="${b.id}" ${allowed.includes('x')?'':'disabled'}>ربط إكس</button>
+      ${['tiktok','linkedin','youtube'].map(n=>`<button class="btn sm" disabled title="قريبًا">${NETS[n].label} (قريبًا)</button>`).join('')}
+    </div></section>`; }).join('')}</div>
+  <div class="note">عند الربط ستنتقل إلى صفحة المنصة لتمنح «رَصد» صلاحية النشر. لا نرى كلمة مرورك، ويمكنك سحب الصلاحية في أي وقت من إعدادات المنصة.</div>`;
+}
+
+function vBilling(){
+  const cur = S.usage?.plan;
+  return header('الاشتراك والفواتير', cur?`باقتك الحالية: ${esc(cur.name)}`:'لا يوجد اشتراك فعّال', '') + `
+  ${cur?`<section class="panel"><h2>الاستهلاك هذا الشهر</h2>${usageMeters()}</section>`:''}
+  <div class="plans">${S.plans.map(p=>planCard(p,{current:cur&&cur.id===p.id, action:`<button class="btn ${cur&&cur.id===p.id?'':'primary'}" data-pay="${p.id}">${cur&&cur.id===p.id?'تجديد شهر':'اشترك الآن'}</button>`})).join('')}</div>
+  <section class="panel"><h2>سجل المدفوعات</h2><div id="payHist" class="empty">جارٍ التحميل…</div></section>`;
+}
+async function fillPayHistory(){
+  const { data } = await sb.from('payments').select('created_at,amount,currency,status,plans(name)').order('created_at',{ascending:false}).limit(50);
+  const el=$('#payHist'); if(!el) return;
+  el.className=''; el.innerHTML = data?.length ? `<div class="tbl-wrap"><table><thead><tr><th>التاريخ</th><th>الباقة</th><th>المبلغ</th><th>الحالة</th></tr></thead><tbody>${data.map(p=>`<tr><td>${dd.format(new Date(p.created_at))}</td><td>${esc(p.plans?.name||'')}</td><td>${money(p.amount,p.currency)}</td><td>${pill(p.status,{paid:'مدفوع'})}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">لا توجد مدفوعات بعد.</div>';
+}
+
+/* ================= الدفع (Moyasar) ================= */
+function loadMoyasar(){
+  if (window.Moyasar) return Promise.resolve();
+  return new Promise((res,rej)=>{
+    const l=document.createElement('link'); l.rel='stylesheet'; l.href='https://cdn.moyasar.com/mpf/1.14.0/moyasar.css'; document.head.appendChild(l);
+    const s=document.createElement('script'); s.src='https://cdn.moyasar.com/mpf/1.14.0/moyasar.js'; s.onload=res; s.onerror=()=>rej(new Error('تعذّر تحميل بوابة الدفع')); document.head.appendChild(s);
+  });
+}
+async function openPayment(planId){
+  const p=S.plans.find(x=>x.id===planId); if(!p) return;
+  openModal(`<h2>الاشتراك في باقة «${esc(p.name)}»</h2><div class="sub">${money(p.price_monthly,p.currency)} لمدة 30 يومًا. يتجدد يدويًا.</div><div class="mysr-form"></div><div class="actions"><span></span><button class="btn" data-close>إلغاء</button></div>`);
+  try{
+    await loadMoyasar();
+    Moyasar.init({
+      element:'.mysr-form', amount:Math.round(p.price_monthly*100), currency:p.currency,
+      description:`اشتراك رصد - ${p.name}`, publishable_api_key:CFG.MOYASAR_PUBLISHABLE_KEY,
+      callback_url: location.origin + location.pathname, methods:['creditcard'],
+      metadata:{ user_id:S.profile.id, plan_id:p.id }
+    });
+  }catch(e){ toast(errMsg(e)); }
+}
+async function handlePaymentReturn(){
+  const q=new URLSearchParams(location.search); const id=q.get('id');
+  if(!id) return;
+  history.replaceState(null,'',location.pathname+'#billing');
+  if(q.get('status')!=='paid'){ toast(q.get('message')||'لم تكتمل عملية الدفع'); return; }
+  try{ const r=await callFn('payment-verify',{payment_id:id}); toast(r.already?'تم تفعيل هذه العملية مسبقًا':`تم تفعيل باقة ${r.plan}`); }
+  catch(e){ toast(errMsg(e)); }
+}
+
+/* ================= محرر المنشور + مساعد Claude ================= */
+function openModal(html){
+  $('#modalRoot').innerHTML=`<div class="scrim" id="scrim"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;
+  const close=()=>{ $('#modalRoot').innerHTML=''; document.removeEventListener('keydown',onKey); };
+  const onKey=e=>{ if(e.key==='Escape') close(); };
+  document.addEventListener('keydown',onKey);
+  $('#scrim').addEventListener('click',e=>{ if(e.target.id==='scrim'||e.target.closest('[data-close]')) close(); });
+  return close;
+}
+function openComposer(post, dateStr){
+  const b=brand(); if(!b){ toast('أضف علامة تجارية أولًا'); return; }
+  const nets=[...new Set(brandAccounts().map(a=>a.network))];
+  const p=post||{ text:'', networks:nets, status:'scheduled', media_url:null, scheduled_at:null };
+  const when = p.scheduled_at ? localInput(new Date(p.scheduled_at)) : (dateStr || localInput(new Date(Date.now()+864e5)).slice(0,11)+'10:00');
+  const locked = post && ['publishing','published'].includes(post.status);
+  const close=openModal(`
+    <h2>${post?'تعديل منشور':'منشور جديد'} · ${esc(b.name)}</h2>
+    ${locked?'<div class="note">هذا المنشور نُشر بالفعل ولا يمكن تعديله.</div>':''}
+    <div class="ai">
+      <div class="head"><span>مساعد الكتابة · Claude</span><span class="sub" id="aiLeft">${S.usage?.plan?`متبقٍ ${nf.format(Math.max(0,S.usage.plan.ai_requests_month-S.usage.ai_month))} طلب`:''}</span></div>
+      <div class="row"><input id="aiBrief" placeholder="عن ماذا تريد أن تنشر؟ مثال: عرض نهاية الأسبوع على القهوة المختصة"><select id="aiTone" style="flex:0 0 130px;min-width:130px"><option value="">نبرة تلقائية</option><option>ودودة</option><option>رسمية</option><option>حماسية</option><option>لهجة سعودية</option><option>لهجة خليجية</option></select></div>
+      <div class="btns"><button class="btn sm" data-ai="write">اكتب لي منشورًا</button><button class="btn sm" data-ai="improve">حسّن النص الحالي</button><button class="btn sm" data-ai="hashtags">اقترح هاشتاقات</button><button class="btn sm" data-ai="ideas">أفكار منشورات</button></div>
+      <div class="sub" id="aiOut" hidden></div>
+    </div>
+    <div class="field"><label for="cText">النص</label><textarea id="cText" maxlength="2200">${esc(p.text)}</textarea><div class="sub" id="cCount" style="text-align:end"></div></div>
+    <div class="field"><label for="cMedia">صورة (مطلوبة لإنستغرام)</label><input id="cMedia" type="file" accept="image/jpeg,image/png">${p.media_url?`<img class="thumb" id="cThumb" src="${esc(p.media_url)}" alt="">`:'<img class="thumb" id="cThumb" hidden alt="">'}</div>
+    <div class="field"><label>الشبكات</label><div class="netpick">${nets.length?nets.map(n=>`<label><input type="checkbox" value="${n}" ${(p.networks||[]).includes(n)?'checked':''}>${NETS[n].label}</label>`).join(''):'<span class="sub">اربط حسابًا من صفحة <a href="#accounts">الحسابات</a> أولًا.</span>'}</div></div>
+    <div class="row"><div class="field"><label for="cWhen">موعد النشر</label><input id="cWhen" type="datetime-local" value="${when}"></div>
+    <div class="field"><label for="cStatus">الحالة</label><select id="cStatus"><option value="scheduled" ${p.status==='scheduled'||p.status==='failed'?'selected':''}>جدولة</option><option value="draft" ${p.status==='draft'?'selected':''}>مسودة</option></select></div></div>
+    ${post?.error?`<div class="err">${esc(post.error)}</div>`:''}
+    <div class="actions"><div>${post?`<button class="btn danger" id="cDel">حذف</button>`:''}</div><div style="display:flex;gap:8px"><button class="btn" data-close>إلغاء</button><button class="btn primary" id="cSave" ${locked?'disabled':''}>حفظ</button></div></div>`);
+  let mediaUrl = p.media_url;
+  const txt=$('#cText'); const upd=()=>$('#cCount').textContent=`${nf.format(txt.value.length)} حرفًا${txt.value.length>280?' · أطول من حد إكس (280)':''}`; upd(); txt.oninput=upd;
+
+  document.querySelectorAll('[data-ai]').forEach(btn=>btn.onclick=async()=>{
+    const task=btn.dataset.ai; const out=$('#aiOut');
+    const selNets=[...document.querySelectorAll('.netpick input:checked')].map(i=>i.value);
+    document.querySelectorAll('[data-ai]').forEach(x=>x.disabled=true); out.hidden=false; out.className='sub'; out.textContent='Claude يكتب…';
+    try{
+      const r=await callFn('ai-assist',{ task, brief:$('#aiBrief').value, text:txt.value, networks:selNets, tone:$('#aiTone').value, brand:b.name });
+      if(task==='hashtags'){ txt.value=(txt.value.trim()+'\n\n'+r.text).trim(); out.hidden=true; }
+      else if(task==='ideas'){ out.textContent=r.text; out.style.whiteSpace='pre-line'; }
+      else { txt.value=r.text; out.hidden=true; }
+      upd(); if(r.remaining!=null){ S.usage.ai_month++; $('#aiLeft').textContent=`متبقٍ ${nf.format(r.remaining)} طلب`; }
+    }catch(e){ out.className='err'; out.textContent=errMsg(e); }
+    document.querySelectorAll('[data-ai]').forEach(x=>x.disabled=false);
+  });
+
+  $('#cMedia').onchange=async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    if(f.size>8*1024*1024){ toast('الحد الأقصى للصورة 8 ميغابايت'); return; }
+    const path=`${S.profile.id}/${Date.now()}-${f.name.replace(/[^\w.-]/g,'_')}`;
+    const { error } = await sb.storage.from('media').upload(path,f,{contentType:f.type});
+    if(error){ toast(errMsg(error)); return; }
+    mediaUrl = sb.storage.from('media').getPublicUrl(path).data.publicUrl;
+    const t=$('#cThumb'); t.src=mediaUrl; t.hidden=false;
+  };
+
+  $('#cSave').onclick=async()=>{
+    const text=txt.value.trim(); const networks=[...document.querySelectorAll('.netpick input:checked')].map(i=>i.value);
+    const status=$('#cStatus').value; const w=$('#cWhen').value;
+    if(!text) return toast('اكتب نص المنشور');
+    if(status==='scheduled'){
+      if(!networks.length) return toast('اختر شبكة واحدة على الأقل');
+      if(!w) return toast('حدّد موعد النشر');
+      if(new Date(w) < new Date(Date.now()-60000)) return toast('الموعد في الماضي');
+      if(networks.includes('instagram') && !mediaUrl) return toast('إنستغرام يتطلب صورة');
+    }
+    const row={ brand_id:b.id, text, networks, status, media_url:mediaUrl, scheduled_at: w?new Date(w).toISOString():null, error:null };
+    $('#cSave').disabled=true;
+    const r = post ? await sb.from('posts').update(row).eq('id',post.id) : await sb.from('posts').insert(row);
+    if(r.error){ $('#cSave').disabled=false; return toast(errMsg(r.error)); }
+    close(); toast(status==='scheduled'?'تمت الجدولة':'تم حفظ المسودة'); await refresh();
+  };
+  if(post) $('#cDel').onclick=async e=>{
+    if(e.target.dataset.sure!=='1'){ e.target.dataset.sure='1'; e.target.textContent='تأكيد الحذف'; return; }
+    const r=await sb.from('posts').delete().eq('id',post.id); if(r.error) return toast(errMsg(r.error));
+    close(); toast('تم الحذف'); await refresh();
+  };
+}
+
+/* ================= لوحة مدير النظام ================= */
+async function vAdmin(){
+  const [st, pays, users] = await Promise.all([
+    sb.rpc('admin_stats'),
+    sb.from('payments').select('created_at,amount,currency,status,profiles(email),plans(name)').order('created_at',{ascending:false}).limit(8),
+    sb.from('profiles').select('email,full_name,created_at').eq('role','client').order('created_at',{ascending:false}).limit(8),
+  ]);
+  const s=st.data||{};
+  return header('نظرة عامة','أداء المنصة هذا الشهر','') + `
+  <div class="kpis">
+    <div class="kpi"><span class="l">العملاء</span><span class="v">${nf.format(s.clients||0)}</span></div>
+    <div class="kpi"><span class="l">اشتراكات فعّالة</span><span class="v">${nf.format(s.active_subs||0)}</span></div>
+    <div class="kpi"><span class="l">الإيراد الشهري المتكرر</span><span class="v">${money(s.mrr)}</span></div>
+    <div class="kpi"><span class="l">مدفوعات هذا الشهر</span><span class="v">${money(s.revenue_month)}</span></div>
+    <div class="kpi"><span class="l">منشورات هذا الشهر</span><span class="v">${nf.format(s.posts_month||0)}</span></div>
+    <div class="kpi"><span class="l">طلبات Claude هذا الشهر</span><span class="v">${nf.format(s.ai_month||0)}</span></div>
+  </div>
+  <div class="grid2">
+    <section class="panel"><h2>آخر المدفوعات <a class="sub" href="#payments">الكل</a></h2>${pays.data?.length?`<div class="tbl-wrap"><table><tbody>${pays.data.map(p=>`<tr><td dir="ltr" style="text-align:end">${esc(p.profiles?.email)}</td><td>${esc(p.plans?.name||'')}</td><td>${money(p.amount,p.currency)}</td><td>${pill(p.status,{paid:'مدفوع'})}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">لا توجد مدفوعات.</div>'}</section>
+    <section class="panel"><h2>أحدث العملاء <a class="sub" href="#clients">الكل</a></h2>${users.data?.length?`<div class="list">${users.data.map(u=>`<div style="display:flex;justify-content:space-between;gap:8px"><span>${esc(u.full_name||'—')}</span><span class="sub">${dd.format(new Date(u.created_at))}</span></div>`).join('')}</div>`:'<div class="empty">لا يوجد عملاء بعد.</div>'}</section>
+  </div>`;
+}
+async function vClients(){
+  const [u, pl] = await Promise.all([
+    sb.from('profiles').select('id,email,full_name,role,created_at,subscriptions(plan_id,status,current_period_end)').order('created_at',{ascending:false}),
+    sb.from('plans').select('id,name').order('sort'),
+  ]);
+  S.admin.users=u.data||[]; S.admin.plans=pl.data||[];
+  const pn=id=>S.admin.plans.find(p=>p.id===id)?.name||'—';
+  const q=(S.admin.q||'').trim().toLowerCase();
+  const list=S.admin.users.filter(x=>!q||(x.email||'').toLowerCase().includes(q)||(x.full_name||'').toLowerCase().includes(q));
+  return header('العملاء',`${nf.format(S.admin.users.length)} مستخدمًا`,'') + `
+  <div class="filters"><input id="uq" type="search" placeholder="ابحث بالاسم أو البريد…" value="${esc(S.admin.q||'')}"></div>
+  <section class="panel"><div class="tbl-wrap"><table><thead><tr><th>الاسم</th><th>البريد</th><th>الباقة</th><th>الحالة</th><th>ينتهي في</th><th>التسجيل</th><th></th></tr></thead><tbody>
+  ${list.map(x=>{const s=Array.isArray(x.subscriptions)?x.subscriptions[0]:x.subscriptions; return `<tr><td>${esc(x.full_name||'—')} ${x.role==='admin'?'<span class="rolebadge">مدير</span>':''}</td><td dir="ltr" style="text-align:end">${esc(x.email)}</td><td>${esc(pn(s?.plan_id))}</td><td>${pill(s?.status||'inactive',SUB_ST)}</td><td>${s?.current_period_end?dd.format(new Date(s.current_period_end)):'—'}</td><td>${dd.format(new Date(x.created_at))}</td><td><button class="btn sm" data-manage="${x.id}">إدارة</button></td></tr>`}).join('')}
+  </tbody></table></div></section>`;
+}
+function manageClient(id){
+  const x=S.admin.users.find(u=>u.id===id); const s=(Array.isArray(x.subscriptions)?x.subscriptions[0]:x.subscriptions)||{};
+  const end = s.current_period_end ? s.current_period_end.slice(0,10) : new Date(Date.now()+30*864e5).toISOString().slice(0,10);
+  const close=openModal(`<h2>إدارة ${esc(x.full_name||x.email)}</h2>
+    <div class="row"><div class="field"><label for="mPlan">الباقة</label><select id="mPlan"><option value="">بدون</option>${S.admin.plans.map(p=>`<option value="${p.id}" ${p.id===s.plan_id?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div>
+    <div class="field"><label for="mStatus">حالة الاشتراك</label><select id="mStatus">${Object.entries(SUB_ST).map(([k,v])=>`<option value="${k}" ${k===(s.status||'inactive')?'selected':''}>${v}</option>`).join('')}</select></div></div>
+    <div class="row"><div class="field"><label for="mEnd">ينتهي في</label><input id="mEnd" type="date" value="${end}"></div>
+    <div class="field"><label for="mRole">الصلاحية</label><select id="mRole"><option value="client" ${x.role==='client'?'selected':''}>عميل</option><option value="admin" ${x.role==='admin'?'selected':''}>مدير نظام</option></select></div></div>
+    <div class="note">استخدم هذا لتفعيل اشتراك يدويًا (تحويل بنكي مثلًا) أو لمنح فترة تجريبية أو إيقاف حساب.</div>
+    <div class="actions"><span></span><div style="display:flex;gap:8px"><button class="btn" data-close>إلغاء</button><button class="btn primary" id="mSave">حفظ</button></div></div>`);
+  $('#mSave').onclick=async()=>{
+    const r1=await sb.from('subscriptions').upsert({ user_id:id, plan_id:$('#mPlan').value||null, status:$('#mStatus').value, current_period_end:new Date($('#mEnd').value+'T23:59:59').toISOString(), updated_at:new Date().toISOString() });
+    if(r1.error) return toast(errMsg(r1.error));
+    if($('#mRole').value!==x.role){ const r2=await sb.from('profiles').update({role:$('#mRole').value}).eq('id',id); if(r2.error) return toast(errMsg(r2.error)); }
+    close(); toast('تم الحفظ'); route();
+  };
+}
+async function vPlans(){
+  const { data } = await sb.from('plans').select('*').order('sort'); S.admin.allPlans=data||[];
+  return header('الباقات','الأسعار وحدود كل باقة', `<button class="btn primary" data-plan="new">+ باقة جديدة</button>`) + `
+  <section class="panel"><div class="tbl-wrap"><table><thead><tr><th>الباقة</th><th>السعر</th><th>علامات</th><th>حسابات</th><th>منشورات/شهر</th><th>Claude/شهر</th><th>الشبكات</th><th>الحالة</th><th></th></tr></thead><tbody>
+  ${S.admin.allPlans.map(p=>`<tr><td>${esc(p.name)}</td><td>${money(p.price_monthly,p.currency)}</td><td>${nf.format(p.max_brands)}</td><td>${nf.format(p.max_accounts)}</td><td>${nf.format(p.max_posts_month)}</td><td>${nf.format(p.ai_requests_month)}</td><td>${p.networks.map(netChip).join(' ')}</td><td>${p.is_active?pill('active',{active:'معروضة'}):pill('canceled',{canceled:'مخفية'})}</td><td><button class="btn sm" data-plan="${p.id}">تعديل</button></td></tr>`).join('')}
+  </tbody></table></div></section>`;
+}
+function editPlan(id){
+  const p = id==='new' ? {name:'',description:'',price_monthly:0,currency:'SAR',max_brands:1,max_accounts:3,max_posts_month:30,ai_requests_month:20,networks:['facebook','instagram','x'],is_active:true,sort:S.admin.allPlans.length+1} : S.admin.allPlans.find(x=>x.id===id);
+  const num=(k,l)=>`<div class="field"><label for="p_${k}">${l}</label><input id="p_${k}" type="number" min="0" value="${p[k]}"></div>`;
+  const close=openModal(`<h2>${id==='new'?'باقة جديدة':'تعديل باقة'}</h2>
+    <div class="row"><div class="field"><label for="p_name">الاسم</label><input id="p_name" value="${esc(p.name)}"></div>${num('price_monthly','السعر الشهري (ريال)')}</div>
+    <div class="field"><label for="p_description">الوصف</label><input id="p_description" value="${esc(p.description||'')}"></div>
+    <div class="row">${num('max_brands','علامات تجارية')}${num('max_accounts','حسابات مربوطة')}</div>
+    <div class="row">${num('max_posts_month','منشورات شهريًا')}${num('ai_requests_month','طلبات Claude شهريًا')}</div>
+    <div class="field"><label>الشبكات المتاحة</label><div class="netpick" id="p_nets">${Object.keys(NETS).map(n=>`<label><input type="checkbox" value="${n}" ${p.networks.includes(n)?'checked':''}>${NETS[n].label}</label>`).join('')}</div></div>
+    <div class="row">${num('sort','الترتيب')}<div class="field"><label for="p_active">العرض للعملاء</label><select id="p_active"><option value="1" ${p.is_active?'selected':''}>معروضة</option><option value="0" ${p.is_active?'':'selected'}>مخفية</option></select></div></div>
+    <div class="actions"><span></span><div style="display:flex;gap:8px"><button class="btn" data-close>إلغاء</button><button class="btn primary" id="pSave">حفظ</button></div></div>`);
+  $('#pSave').onclick=async()=>{
+    const row={ name:$('#p_name').value.trim(), description:$('#p_description').value.trim(), price_monthly:+$('#p_price_monthly').value,
+      max_brands:+$('#p_max_brands').value, max_accounts:+$('#p_max_accounts').value, max_posts_month:+$('#p_max_posts_month').value,
+      ai_requests_month:+$('#p_ai_requests_month').value, sort:+$('#p_sort').value, is_active:$('#p_active').value==='1',
+      networks:[...document.querySelectorAll('#p_nets input:checked')].map(i=>i.value) };
+    if(!row.name) return toast('اكتب اسم الباقة');
+    const r = id==='new' ? await sb.from('plans').insert(row) : await sb.from('plans').update(row).eq('id',id);
+    if(r.error) return toast(errMsg(r.error));
+    close(); toast('تم حفظ الباقة'); route();
+  };
+}
+async function vPayments(){
+  const { data } = await sb.from('payments').select('created_at,amount,currency,status,provider_payment_id,profiles(email,full_name),plans(name)').order('created_at',{ascending:false}).limit(500);
+  return header('المدفوعات',`${nf.format(data?.length||0)} عملية`,'') + `<section class="panel">${data?.length?`<div class="tbl-wrap"><table><thead><tr><th>التاريخ</th><th>العميل</th><th>الباقة</th><th>المبلغ</th><th>الحالة</th><th>رقم العملية</th></tr></thead><tbody>${data.map(p=>`<tr><td>${df.format(new Date(p.created_at))}</td><td>${esc(p.profiles?.full_name||'')} <span class="sub" dir="ltr">${esc(p.profiles?.email)}</span></td><td>${esc(p.plans?.name||'')}</td><td>${money(p.amount,p.currency)}</td><td>${pill(p.status,{paid:'مدفوع'})}</td><td dir="ltr" class="sub">${esc(p.provider_payment_id)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">لا توجد مدفوعات بعد.</div>'}</section>`;
+}
+
+/* ================= التوجيه والأحداث ================= */
+const CLIENT_VIEWS = {dashboard:vDashboard, planner:vPlanner, posts:vPosts, accounts:vAccounts, billing:vBilling};
+const ADMIN_VIEWS = {admin:vAdmin, clients:vClients, plans:vPlans, payments:vPayments};
+async function route(){
+  const [name, query] = location.hash.slice(1).split('?');
+  const views = isAdmin() ? ADMIN_VIEWS : CLIENT_VIEWS;
+  S.view = views[name] ? name : (isAdmin() ? 'admin' : 'dashboard');
+  document.querySelectorAll('#menu a').forEach(a=>a.dataset.v===S.view?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current'));
+  const v = $('#view'); if(!v) return;
+  const active=document.activeElement?.id, pos=active&&document.activeElement.selectionStart;
+  v.innerHTML = await views[S.view]();
+  if(active==='fq'||active==='uq'){ const i=$('#'+active); if(i){ i.focus(); i.setSelectionRange(pos,pos);} }
+  if(S.view==='billing') fillPayHistory();
+  if(query){ const q=new URLSearchParams(query); if(q.get('connected')) toast(`تم ربط ${q.get('connected')} حساب`); if(q.get('error')) toast(q.get('error')); history.replaceState(null,'','#'+name); }
+}
+async function refresh(){ if(!isAdmin()) await loadClient(); route(); }
+window.addEventListener('hashchange', route);
+
+document.addEventListener('click', async e=>{
+  const t=e.target.closest('[data-edit],[data-act],[data-day],[data-cal],[data-connect],[data-unlink],[data-delbrand],[data-pay],[data-manage],[data-plan]'); if(!t) return;
+  if(t.dataset.edit){ e.stopPropagation(); const p=S.posts.find(x=>x.id===t.dataset.edit); if(p) openComposer(p); return; }
+  if(t.dataset.act==='new') return openComposer(null);
+  if(t.dataset.day){ if(hasPlan()&&brand()) openComposer(null, t.dataset.day+'T10:00'); return; }
+  if(t.dataset.cal!=null){ const v=+t.dataset.cal; S.calMonth = v===0?null:new Date(S.calMonth.getFullYear(), S.calMonth.getMonth()+v, 1); return route(); }
+  if(t.dataset.pay) return openPayment(t.dataset.pay);
+  if(t.dataset.manage) return manageClient(t.dataset.manage);
+  if(t.dataset.plan) return editPlan(t.dataset.plan);
+  if(t.dataset.connect){ t.disabled=true; try{ const r=await callFn('social-connect',{action:'start',network:t.dataset.connect,brand_id:t.dataset.brand}); location.href=r.url; }catch(err){ t.disabled=false; toast(errMsg(err)); } return; }
+  if(t.dataset.unlink){ const r=await sb.from('social_accounts').delete().eq('id',t.dataset.unlink); if(r.error) return toast(errMsg(r.error)); toast('تم فصل الحساب'); return refresh(); }
+  if(t.dataset.delbrand){ if(t.dataset.sure!=='1'){ t.dataset.sure='1'; t.textContent='تأكيد: حذف العلامة وكل منشوراتها'; return; }
+    const r=await sb.from('brands').delete().eq('id',t.dataset.delbrand); if(r.error) return toast(errMsg(r.error)); toast('تم حذف العلامة'); return refresh(); }
+});
+document.addEventListener('input', e=>{ if(e.target.id==='fq'){ S.filt.q=e.target.value; route(); } if(e.target.id==='uq'){ S.admin.q=e.target.value; route(); } });
+document.addEventListener('change', e=>{ if(e.target.id==='fs'){ S.filt.status=e.target.value; route(); } });
+document.addEventListener('submit', async e=>{
+  if(e.target.id!=='brandForm') return; e.preventDefault();
+  const r=await sb.from('brands').insert({ name:$('#bName').value.trim(), color:$('#bColor').value }).select('id').single();
+  if(r.error) return toast(errMsg(r.error));
+  S.brandId=r.data.id; try{localStorage.setItem('rasd.brand',S.brandId)}catch(_){}; toast('تمت إضافة العلامة'); refresh();
+});
+
+/* ================= التشغيل ================= */
+let booted=null;
+async function boot(session){
+  S.session=session;
+  if(!session){ booted=null; return renderLanding(); }
+  if(booted===session.user.id) return;
+  booted=session.user.id;
+  const { data:profile } = await sb.from('profiles').select('*').eq('id',session.user.id).single();
+  S.profile=profile;
+  if(!profile){ $('#root').innerHTML='<div class="loading">تعذّر تحميل الحساب. أعد المحاولة.</div>'; return; }
+  shell();
+  await handlePaymentReturn();
+  await refresh();
+}
+sb.auth.getSession().then(({data})=>boot(data.session));
+sb.auth.onAuthStateChange((_e, session)=>{ if((session?.user.id||null)!==booted) boot(session); });
+</script>
+</body>
+</html>
